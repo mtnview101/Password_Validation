@@ -36,7 +36,11 @@ public class PasswordValidation {
               p.load(new FileInputStream("./src/resources/test_data/csv/messages.properties"));
               MessageResolver msg = new PropertiesMessageResolver(p);
 
-  ArrayWordList awl = WordLists.createFromReader(new FileReader[] {new FileReader("./src/resources/test_data/csv/dictionary.txt")},false,new ArraysSort());
+  ArrayWordList awl = WordLists.createFromReader(
+new FileReader[] {
+new FileReader("./src/resources/test_data/csv/dictionary.txt")},false,
+new ArraysSort());
+  
   WordListDictionary dict = new WordListDictionary(awl);
   DictionaryRule dictRule = new DictionaryRule(dict);
   //DictionarySubstringRule dicSubRule = new DictionarySubstringRule(dict);

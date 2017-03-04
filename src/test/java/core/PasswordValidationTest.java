@@ -11,6 +11,7 @@ import org.openqa.selenium.chrome.*;
 import org.openqa.selenium.htmlunit.*;
 import org.passay.CharacterCharacteristicsRule;
 import org.passay.CharacterRule;
+import org.passay.DictionaryRule;
 import org.passay.DictionarySubstringRule;
 import org.passay.EnglishCharacterData;
 import org.passay.LengthRule;
@@ -35,50 +36,55 @@ public class PasswordValidationTest implements ITest{
     public String getTestName()             {return test_name;}
     private void setTestName(String a)     {test_name = a;}
     
-    @BeforeMethod(alwaysRun = true)
-    public void bm(Method method, Object[] parameters) {
-           setTestName(method.getName());
-           Override a = method.getAnnotation(Override.class);
-           String testCaseId = (String) parameters[a.id()];
-           setTestName(testCaseId);}
+@BeforeMethod(alwaysRun = true)
+public void bm(Method method, Object[] parameters) {
+       setTestName(method.getName());
+       Override a = method.getAnnotation(Override.class);
+       String testCaseId = (String) parameters[a.id()];
+       setTestName(testCaseId);}
+
+@DataProvider(name = "dp")
+public Iterator<String[]> a2d() throws InterruptedException, IOException {
+       String cvsLine = "";
+       String[] a = null; 
+       ArrayList<String[]> al = new ArrayList<>();
+       BufferedReader br = new BufferedReader(new FileReader(csvFile));
+       while ((cvsLine = br.readLine()) != null) {
+              a = cvsLine.split(",");al.add(a);} br.close();
+       return al.iterator();}
     
-    @DataProvider(name = "dp")
-    public Iterator<String[]> a2d() throws InterruptedException, IOException {
-           String cvsLine = "";
-           String[] a = null; 
-           ArrayList<String[]> al = new ArrayList<>();
-           BufferedReader br = new BufferedReader(new FileReader(csvFile));
-           while ((cvsLine = br.readLine()) != null) {
-                  a = cvsLine.split(",");al.add(a);} br.close();
-           return al.iterator();}
+@Override
+@Test(dataProvider = "dp")
+public void test(String password) throws FileNotFoundException, IOException {
+       assertThat(passwordValidate(password), equalTo(true));}
     
-    @Override
-    @Test(dataProvider = "dp")
-    public void test(String password) throws FileNotFoundException, IOException {
-           assertThat(passwordValidate(password), equalTo(true));}
 public static boolean passwordValidate(String password) throws FileNotFoundException, IOException {
-           Properties p = new Properties();
-           p.load(new FileInputStream("./src/resources/test_data/csv/messages.properties"));
-          MessageResolver msg = new PropertiesMessageResolver(p);
-           ArrayWordList awl = WordLists.createFromReader(
+   Properties p = new Properties();
+   p.load(new FileInputStream("./src/resources/test_data/csv/messages.properties"));
+   MessageResolver msg = new PropertiesMessageResolver(p);
+   
+ArrayWordList awl = WordLists.createFromReader(
 new FileReader[] {
-new FileReader("./src/resources/test_data/csv/dictionary.txt") }, false, 
+new FileReader("./src/resources/test_data/csv/dictionary.txt")}, false, 
 new ArraysSort());
-           DictionarySubstringRule dicSubRule = 
-new DictionarySubstringRule(new WordListDictionary(awl));
-           dicSubRule.setMatchBackwards(true);
+
+WordListDictionary dict = new WordListDictionary(awl);
+DictionaryRule dictRule = new DictionaryRule(dict);
+//DictionarySubstringRule dicSubRule = new DictionarySubstringRule(new WordListDictionary(awl));
+//dicSubRule.setMatchBackwards(false);
+
            CharacterCharacteristicsRule rule = new CharacterCharacteristicsRule();
-           rule.setNumberOfCharacteristics(5);
+           rule.setNumberOfCharacteristics(3);
            rule.getRules().add(new CharacterRule(EnglishCharacterData.UpperCase, 1));
            rule.getRules().add(new CharacterRule(EnglishCharacterData.LowerCase, 1));
            rule.getRules().add(new CharacterRule(EnglishCharacterData.Alphabetical, 1));
            rule.getRules().add(new CharacterRule(EnglishCharacterData.Digit, 1));
            rule.getRules().add(new CharacterRule(EnglishCharacterData.Special, 1));
 
-          PasswordValidator validator = 
+PasswordValidator validator = 
 new PasswordValidator(msg,Arrays.asList(
 new LengthRule(8, 16),rule,
-new WhitespaceRule(),dicSubRule));
+new WhitespaceRule(),dictRule));
           
            RuleResult result = validator.validate(new PasswordData(password));
            if (result.isValid()) {System.out.println("Valid password");return true;}
